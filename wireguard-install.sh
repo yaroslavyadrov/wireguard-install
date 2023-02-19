@@ -111,10 +111,6 @@ function installQuestions() {
 
 	# Detect public IPv4 or IPv6 address and pre-fill for the user
 	SERVER_PUB_IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | awk '{print $1}' | head -1)
-	if [[ -z ${SERVER_PUB_IP} ]]; then
-		# Detect public IPv6 address
-		SERVER_PUB_IP=$(ip -6 addr | sed -ne 's|^.* inet6 \([^/]*\)/.* scope global.*$|\1|p' | head -1)
-	fi
 	read -rp "IPv4 or IPv6 public address: " -e -i "${SERVER_PUB_IP}" SERVER_PUB_IP
 
 	# Detect public interface and pre-fill for the user
@@ -237,14 +233,10 @@ PostDown = firewall-cmd --remove-port ${SERVER_PORT}/udp && firewall-cmd --remov
 PostUp = iptables -I FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT
 PostUp = iptables -I FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
 PostUp = iptables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
-PostUp = ip6tables -I FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
-PostUp = ip6tables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
 PostDown = iptables -D INPUT -p udp --dport ${SERVER_PORT} -j ACCEPT
 PostDown = iptables -D FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT
 PostDown = iptables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
 PostDown = iptables -t nat -D POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
-PostDown = ip6tables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
-PostDown = ip6tables -t nat -D POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
 	fi
 
 	# Enable routing on the server
